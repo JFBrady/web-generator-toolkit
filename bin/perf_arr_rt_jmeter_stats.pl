@@ -22,7 +22,7 @@ This script uses jmeter csv output to produce arr, rt, byte, err, and bw stats
  -f exclude failure records from analysis
  -g create graphs
  -h display help text
- -r set dispersion statistic to cv for agg, byte, rt_1st (default is vmr)
+ -r set dispersion statistic to vmr for agg, byte, rt_1st (default is cv)
  -t cp input files to tstamp dir(3) + column YYYYMMDDhhmmss(1) or hh:mm:ss(2)
  -y set arr, rt, byte probability levels (default is 90_95_99)
 
@@ -54,6 +54,7 @@ use Graph_jfb;
 my ($infile);
 my ($infile_list_ref);
 my ($row_count);
+my (@row_parts);
 my ($tick_set);
 my ($web_page);
 my (@error_list);
@@ -154,7 +155,7 @@ my (@graph_color)=('copper',
                    'red',
                    'tan');
 
-my ($cv_or_vmr)='vmr';
+my ($cv_or_vmr)='cv';
 my ($cell_size1)=10;
 my ($cell_size2)=100;
 my ($cell_max)=10000;
@@ -268,18 +269,26 @@ foreach $infile (@$infile_list_ref)
     ######################################
     # Split the row into parts           #
     ######################################
-    ($tstamp,
-     $response_ms,
-     $web_page_label_orig,
-     undef,undef,undef,undef,
-     $successfail,
-     $web_bytes,
-     $response_1st_ms) = split ('\,',$_);
+    (@row_parts) = split ('\,',$_);
+    if (@row_parts >= 6)
+    {
+      $tstamp = $row_parts[0];
+      $response_ms = $row_parts[1];
+      $web_page_label_orig = $row_parts[2];
+      $successfail = $row_parts[@row_parts-3];
+      $web_bytes = $row_parts[@row_parts-2];
+      $response_1st_ms = $row_parts[@row_parts-1];
+    }
+    else
+    {
+      push @error_list,join ',',$row_count,$_;
+      next;
+    }
 
     ##############################################
     # Check for bad record                       #
     ##############################################
-    if (bad_record($_))
+    if (bad_record($tstamp,$response_1st_ms))
     {
       push @error_list,join ',',$row_count,$_;
       next;
@@ -971,35 +980,17 @@ foreach $infile (@$infile_list_ref)
 sub
 bad_record
 {
-  my ($row) = @_;
+  my ($tstamp_val,$response_1st_ms_val) = @_;
 
-  my (@row_element);
-  my ($elements);
   my ($bad);
 
-  ################################
-  # If row set                   #
-  ################################
-  if ($row)
+  ########################################################
+  # Check tstamp size and if response_1st_ms is a number #
+  ########################################################
+  if (length($tstamp_val) ne 13 or
+     $response_1st_ms_val =~ /\D/)
   {
-    (@row_element) = split ('\,',$row);
-    $elements = @row_element; 
-
-    ###########################################
-    # Check element count and timestamp size  #
-    ###########################################
-    if ($elements ne 10 or
-        length($row_element[0]) ne 13)
-    {
-      $bad =1;
-    }
-  }
-  ################################
-  # If row not set               #
-  ################################
-  else
-  {
-    $bad = 1;
+    $bad =1;
   }
 
   return($bad);
@@ -1064,7 +1055,7 @@ set_options
   ################################
   if (defined $opt_r)
   {
-    $cv_or_vmr2 = 'cv';
+    $cv_or_vmr2 = 'vmr';
   }
 
   ################################

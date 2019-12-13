@@ -47,30 +47,21 @@ my ($infile);
 my ($infile1);
 my ($infile_list_ref);
 my ($row_count);
-my ($record);
-my (@records_in);
+my (@row_parts);
 my (@records_out);
 my ($record_out);
 my (@error_list);
-my ($arg);
 my ($out_file);
-my ($t_before);
-my ($t_duration);
 my ($tstamp_init);
 my ($tstamp_beg);
 my ($tstamp_end);
 my ($tstamp_new);
 my ($tstamp);
 my ($response_ms);
-my ($web_page_label);
-my ($rcode);
-my ($status);
-my ($thread);
-my ($datatype);
-my ($successfail);
-my ($web_bytes);
-my ($response_1st_ms);
 
+my ($arg)='All';
+my ($t_before)=0;
+my ($t_duration)=999999999;
 my ($outdir_rpt)='select';
 my ($outdir_error)='errors';
 
@@ -95,10 +86,6 @@ if (@ARGV eq 1)
 {
   $arg = shift @ARGV;
   ($t_before,$t_duration) = split ('\_',$arg);
-}
-else
-{
-  die "\nUsage: $0 [opt-h] invalid number of arguments (one required)\n\n";
 }
 
 #####################################
@@ -158,38 +145,28 @@ foreach $infile (@$infile_list_ref)
     $row_count++;
     $row_count = sprintf('%07d',$row_count);
 
+    ######################################
+    # Split the row into parts           #
+    ######################################
+    ($tstamp,$response_ms,@row_parts) = split ('\,',$_);
+    if (@row_parts < 8)
+    {
+      push @error_list,join ',',$row_count,$_;
+      next;
+    }
+
     ##############################################
     # Check for bad record                       #
     ##############################################
-    if (bad_record($_))
+    if (bad_record($tstamp,$response_ms))
     {
       push @error_list,join ',',$row_count,$_;
       next;
     }
 
     ######################################
-    # Put record on list                 #
+    # Set Time Interval                  #
     ######################################
-    push @records_in,$_;
-  }
-  close INFILE;
-
-  ######################################
-  # Split the row into parts           #
-  ######################################
-  foreach $record (sort @records_in)
-  {
-    ($tstamp,
-     $response_ms,
-     $web_page_label,
-     $rcode,
-     $status,
-     $thread,
-     $datatype,
-     $successfail,
-     $web_bytes,
-     $response_1st_ms) = split ('\,',$record);
-
     if (!$tstamp_init)
     {
       $tstamp_init = $tstamp;
@@ -206,16 +183,16 @@ foreach $infile (@$infile_list_ref)
       next;
     }
 
-    ######################################
-    # Update tstamp - opt_a              #
-    ######################################
+    ###################################################
+    # opt_a Add web page response time to timestamp   #
+    ###################################################
     if ($opt_a)
     {
       $tstamp_new = $tstamp + $response_ms;
     }
-    ######################################
-    # opt_b                              #
-    ######################################
+    ######################################################
+    # opt_b Subtract web page response time to timestamp #
+    ######################################################
     elsif ($opt_b)
     {
       $tstamp_new = $tstamp - $response_ms;
@@ -227,24 +204,13 @@ foreach $infile (@$infile_list_ref)
     {
       $tstamp_new = $tstamp;
     }
-
     ######################################
     # Put record on out list             #
     ######################################
-    $record_out = join ',',
-                          $tstamp_new,
-                          $response_ms,
-                          $web_page_label,
-                          $rcode,
-                          $status,
-                          $thread,
-                          $datatype,
-                          $successfail,
-                          $web_bytes,
-                          $response_1st_ms
-                          ;
+    $record_out = join ',',$tstamp_new,$response_ms,@row_parts;
     push @records_out,$record_out;
   }
+  close INFILE;
     
   ################################
   # create record list           #
@@ -271,7 +237,6 @@ foreach $infile (@$infile_list_ref)
   ###############
   undef $row_count;
   undef $tstamp_init;
-  undef @records_in;
   undef @records_out;
   undef @error_list;
 }
@@ -281,35 +246,17 @@ foreach $infile (@$infile_list_ref)
 sub
 bad_record
 {
-  my ($row) = @_;
+  my ($tstamp_val,$response_ms_val) = @_;
 
-  my (@row_element);
-  my ($elements);
   my ($bad);
 
-  ################################
-  # If row set                   #
-  ################################
-  if ($row)
+  ##############################
+  # Check tstamp size          #
+  ##############################
+  if (length($tstamp_val) ne 13 or
+     $response_ms_val =~ /\D/)
   {
-    (@row_element) = split ('\,',$row);
-    $elements = @row_element; 
-
-    ###########################################
-    # Check element count and timestamp size  #
-    ###########################################
-    if ($elements ne 10 or
-        length($row_element[0]) ne 13)
-    {
-      $bad =1;
-    }
-  }
-  ################################
-  # If row not set               #
-  ################################
-  else
-  {
-    $bad = 1;
+    $bad=1;
   }
 
   return($bad);

@@ -22,14 +22,17 @@ Perform the following steps:
 
 <b>Note:</b> Be sure that the `GD.pm` module is in your Perl installation.
 
-More details are provided in [web-gen-toolkit_doc.pdf](https://github.com/DrQz/web-generator-toolkit/blob/master/web-gen-toolkit_doc.pdf)
+More details are provided in [web-gen-toolkit_doc.pdf](https://github.com/JFBrady/web-generator-toolkit/blob/master/web-gen-toolkit_doc.pdf)
 
 
 
 ## References
 
 1. J. F. Brady and N. J. Gunther, "How to Emulate Web Traffic Using Standard Load Testing Tools," 
-Proceedings of CMG imPACt 2016, La Jolla, California. ([Updated paper](https://github.com/DrQz/web-generator-toolkit/blob/master/cmg16paper.pdf), [PPTX slides](https://github.com/DrQz/web-generator-toolkit/blob/master/CMG16slides.pptx))
+Proceedings of CMG imPACt 2016, La Jolla, California. ([paper](https://github.com/JFBrady/web-generator-toolkit/blob/master/cmg16paper.pdf), [slides](https://github.com/JFBrady/web-generator-toolkit/blob/master/CMG16slides.pdf))
+
+1. J. F. Brady , "Is Your Load Generator Launching Web Requests in Bunches?," 
+Proceedings of CMG imPACt 2019, Seattle, Washington. ([paper](https://github.com/JFBrady/web-generator-toolkit/blob/master/CMG2019_paper.pdf), [slides](https://github.com/JFBrady/web-generator-toolkit/blob/master/CMG2019_slides.pdf))
 
 1. J. F. Brady,  "When Load Testing Large User Population Web Applications: The Devil is in The (Virtual) User Details," 
 CMG Proceedings 2012, Las Vegas, Nevada. ([PDF](http://www.perfdynamics.com/Classes/Materials/Brady-CMG12.pdf)) 
